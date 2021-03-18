@@ -1,29 +1,36 @@
 #include <iostream>
 #include <WS2tcpip.h>
 #include <string>
-//#include <boost/multiprecision/cpp_int.hpp>
-//#include <boost/lexical_cast.hpp>
 
 #pragma comment (lib, "WS2_32.lib")
 
 using namespace std;
-//using namespace boost::multiprecision;
 
-// to do power shit
 /*
-uint512_t power_of(uint512_t user_1, int user_2)
+void reverse_str(string& rev_str)
 {
-	uint512_t power_b = 1;
-	for (int i = 1; i <= user_2; i++)
-	{
-		power_b = power_b * user_1;
-		//cout << "The power is now: " << power_b << endl;
-	}
+	const int n = rev_str.length();
 
-	return power_b;
+	for (int i = 0; i < n / 2; i++)
+	{
+		swap(rev_str[i], rev_str[n - i - 1]);
+	}
 }
 */
 
+string to_binary(int n)
+{
+	string encrypt;
+	for(int i = 0; i <= 7; i++)
+	{
+		encrypt += (n % 2 == 0 ? "0" : "1");
+		n /= 2;
+	}
+
+	//reverse_str(encrypt);
+
+	return encrypt;
+}
 
 void main()
 {
@@ -175,7 +182,8 @@ void main()
 									unsigned __int64 powe = pow(be, e);
 									int enc = (powe % mod);
 									cout << "enc = " << enc << endl;
-									encrypted_str += toascii(enc);
+									encrypted_str += to_binary(enc);
+									//encrypted_str += toascii(enc);
 								}
 								cout << "try ascii stuff = " << encrypted_str << endl;
 
