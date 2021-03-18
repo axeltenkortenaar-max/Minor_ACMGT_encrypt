@@ -3,7 +3,7 @@
 #include <istream>
 #include <string>
 #include <boost/multiprecision/cpp_int.hpp>
-#include <boost/lexical_cast.hpp>\
+#include <boost/lexical_cast.hpp>
 #include <algorithm>
 
 #pragma comment(lib, "ws2_32.lib")
@@ -111,21 +111,30 @@ string rsa_decryption(int prime_1, int prime_2, int encrypt, int product, char *
 	}
 
 	const int d = d_array[0];
-	cout << "d =" << d << endl;
-	cout << "product =" << product << endl;
+	int l = 0;
 
 	for(int i = 0; i <= 25; i++)
 	{
-		const int enc = int(encryption[i]);
+		int num = 0;
+		int exp = 1;
+
+		for (int j = 0; j <= 7; j++)
+		{
+			if (encryption[l] == '1')
+			{
+				num += exp;
+			}
+			exp = exp * 2;
+			l++;
+		}
+
+		const int enc = num;
 		const uint1024_t power_d = power_of(enc, d);
-
 		const uint1024_t decryption = power_d % product;
-
 		const string test_str = boost::lexical_cast<string>(decryption);
-
 		decrypt_str += toascii(stoi(test_str));
-		
 	}
+
 	return decrypt_str;
 }
 
@@ -224,7 +233,6 @@ void main()
 					// echo response to console
 					if (*buf != 0)
 					{
-						cout << "buf = " << buf << endl;
 						const string decryption = rsa_decryption(prime_1, prime_2, encrypt, product, buf);
 						cout << "The decrypted code = " << decryption << endl;
 						//const string str = boost::lexical_cast<string>(decryption);
