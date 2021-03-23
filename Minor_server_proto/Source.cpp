@@ -6,18 +6,6 @@
 
 using namespace std;
 
-/*
-void reverse_str(string& rev_str)
-{
-	const int n = rev_str.length();
-
-	for (int i = 0; i < n / 2; i++)
-	{
-		swap(rev_str[i], rev_str[n - i - 1]);
-	}
-}
-*/
-
 string to_binary(int n)
 {
 	string encrypt;
@@ -188,20 +176,6 @@ void main()
 
 								//send(out_sock, encrypted_str.c_str(), encrypted_str.size(), 0);
 								send(sock, encrypted_str.c_str(), encrypted_str.size(), 0);
-
-								/*
-								const int client = atoi(buf);
-								const unsigned __int64 power_e = pow(client, e);
-								//uint512_t power_e = power_of(client, e);
-
-								const int encryption = (power_e % mod);
-								const string str = to_string(encryption);
-								//string str = boost::lexical_cast<string>(encryption);
-								cout << "The encrypted sending = " << str << endl;
-
-								send(out_sock, str.c_str(), str.size(), 0);
-								send(sock, str.c_str(), str.size(), 0);
-								*/
 							}
 						}
 					}
