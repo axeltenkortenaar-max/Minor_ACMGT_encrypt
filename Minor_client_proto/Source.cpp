@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_DEPRECATE
 #include <iostream>
 #include <WS2tcpip.h>
 #include <istream>
@@ -5,6 +6,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/lexical_cast.hpp>
 #include <algorithm>
+#include <fstream>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -88,11 +90,12 @@ uint1024_t power_of(int user_1, int user_2)
 	return power_b;
 }
 
-string rsa_decryption(int prime_1, int prime_2, int encrypt, int product, char *encryption)
+string rsa_decryption(int prime_1, int prime_2, int encrypt, int product, char *encryption, int bytes_recv)
 {
 	int k = 0;
 	int d_array[200];
 	string decrypt_str;
+	string test;
 
 	const int coprime_1 = (prime_1 - 1) * (prime_2 - 1);
 
@@ -113,7 +116,7 @@ string rsa_decryption(int prime_1, int prime_2, int encrypt, int product, char *
 	const int d = d_array[0];
 	int l = 0;
 
-	for(int i = 0; i <= 25; i++)
+	for(int i = 0; i <= bytes_recv; i++)
 	{
 		int num = 0;
 		int exp = 1;
@@ -128,6 +131,7 @@ string rsa_decryption(int prime_1, int prime_2, int encrypt, int product, char *
 			l++;
 		}
 
+		test += toascii(num);
 		const int enc = num;
 		const uint1024_t power_d = power_of(enc, d);
 		const uint1024_t decryption = power_d % product;
@@ -135,9 +139,18 @@ string rsa_decryption(int prime_1, int prime_2, int encrypt, int product, char *
 		decrypt_str += toascii(stoi(test_str));
 	}
 
+	cout << "[LOG] bytes in =" << bytes_recv / 8 << endl;
+	//cout << "The Stuff that is sended over ="<< test << endl;
 	return decrypt_str;
 }
 
+void write_txt(string decrypt)
+{
+	ofstream myfile;
+	myfile.open("F:\\School\\Minor_ACMGT\\Recieving\\recv_text_1.txt");
+	myfile << decrypt << endl;
+	myfile.close();
+}
 
 void main()
 {
@@ -198,11 +211,13 @@ void main()
 
 	// do_while looop to send and receive data
 	char buf[4096];
+	char *buffer;
 	string user_input;
 	string test_stuff = "abcdefghijklmnopqrstuvwxyz";
 	int i = 0;
 	int k = 0;
 	string public_key = "PK" + to_string(encrypt) + "," + to_string(product) + ",";
+	FILE* file;
 
 	do
 	{
@@ -211,6 +226,11 @@ void main()
 		{
 			user_input = public_key;
 			i++;
+			const int send_result = send(sock, user_input.c_str(), user_input.size() + 1, 0);
+			if (send_result != 0)
+			{
+				cerr << "The public key did send! \n";
+			}
 		}
 		else
 		{ 
@@ -221,10 +241,37 @@ void main()
 		if (user_input.size() > 0)			//make sure the user has typed in something
 		{
 
+			///////// Try to send a .txt file
+			file = fopen("F:\\School\\Minor_ACMGT\\Sending\\send_test_1.txt", "r");
+
+			if (!file)
+			{
+				cerr << "The File doesn't exist \n" << WSAGetLastError() << endl;
+				closesocket(sock);
+				WSACleanup();
+				return;
+			}
+
+			cout << "The file opened correctly! \n";
+
+			fseek(file, 0, SEEK_END);
+			const int size = ftell(file);
+			fseek(file, 0, SEEK_SET);
+			cout << "Success???? \n";
+
+			buffer = (char*)malloc(size + 1);
+			fread(buffer, size, 1, file);
+			fclose(file);
+
+			const int send_result = send(sock, buffer, size, 0);
+			free(buffer);
+
 			// send the text
-			const int send_result = send(sock, user_input.c_str(), user_input.size() + 1, 0);
+			//const int send_result = send(sock, user_input.c_str(), user_input.size() + 1, 0);
 			if (send_result != SOCKET_ERROR)
 			{
+				cout << "Sending is completed! \n";
+
 				//wait for response
 				ZeroMemory(buf, 4096);
 				const int bytes_received = recv(sock, buf, 4096, 0);
@@ -233,18 +280,9 @@ void main()
 					// echo response to console
 					if (*buf != 0)
 					{
-						const string decryption = rsa_decryption(prime_1, prime_2, encrypt, product, buf);
-						cout << "The decrypted code = " << decryption << endl;
-						//const string str = boost::lexical_cast<string>(decryption);
-						
-
-						/*
-						// test stuff if it is working or not
-						if (str == test_stuff[k])
-						{
-							cout << "The number send = " << test_stuff[k] << ";  It is the same so it works!!! \n";
-						}
-						*/
+						const string decryption = rsa_decryption(prime_1, prime_2, encrypt, product, buf, bytes_received);
+						cout << "The decrypted code = " << decryption << endl;	
+						write_txt(decryption);
 						break;
 					}
 				}
