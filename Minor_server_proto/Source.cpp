@@ -104,11 +104,12 @@ void main()
 			{
 				char buf[4096];
 				ZeroMemory(buf, 4096);
-				const int bytes_in = recv(sock, buf, 4096, 0);
 				const char P[] = { "P" };
 				const char K[] = { "K" };
 				const char seperation[] = { "," };
 
+
+				const int bytes_in = recv(sock, buf, 4096, 0);
 
 				if (bytes_in <= 0)
 				{
@@ -176,14 +177,12 @@ void main()
 								/// ascii try
 								string encrypted_str;
 
-								for (int i = 0; i <= 25; i++)
+								for (int i = 0; i <= bytes_in; i++)
 								{
 									int be = int(buf[i]);
 									unsigned __int64 powe = pow(be, e);
 									int enc = (powe % mod);
-									cout << "enc = " << enc << endl;
 									encrypted_str += to_binary(enc);
-									//encrypted_str += toascii(enc);
 								}
 								cout << "try ascii stuff = " << encrypted_str << endl;
 
