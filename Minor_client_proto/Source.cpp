@@ -172,6 +172,7 @@ void main()
 	///////////// RSA encryption ////////////
 
 	string ip_address = "127.0.0.1";	// Ip adress of the server
+	//string ip_address = "185.39.46.19";	// Ip adress of the server (enschede stad van nu (wifi))
 	const int port = 54000;					// listening port # on the server
 
 	// Initialize winsock
