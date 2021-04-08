@@ -33,7 +33,7 @@ void main()
 	const int ws_ok = WSAStartup(ver, &ws_data);
 	if (ws_ok != 0)
 	{
-		cerr << "Can't Initialize winsock! Quiting" << endl;
+		cerr << "[LOG] Can't Initialize winsock! Quiting" << endl;
 		return;
 	}
 
@@ -42,7 +42,7 @@ void main()
 
 	if (listening == INVALID_SOCKET)
 	{
-		cerr << "Can't create a socket! Quitting" << endl;
+		cerr << "[LOG] Can't create a socket! Quitting" << endl;
 		return;
 	}
 
@@ -64,7 +64,7 @@ void main()
 
 	FD_SET(listening, &master);
 
-	cout << "The server is setted up and works fully \n";
+	cout << "[LOG] The server is setted up and works fully \n";
 
 	while (true)
 	{
@@ -84,7 +84,7 @@ void main()
 				// add the new connection to the list of connected clients
 				FD_SET(client, &master);
 
-				cout << "Client is connected on #" << client << endl;
+				cout << "[LOG] Client is connected on #" << client << endl;
 			}
 
 			//accept a new message
@@ -104,13 +104,12 @@ void main()
 					// drop the client cause nothing
 					closesocket(sock);
 					FD_CLR(sock, &master);
-					cout << "No connection with the client (client left) \n";
+					cout << "[LOG] No connection with the client (client left) \n";
 				}
 
 				else
 				{
-					cout << "The output from sock #" << sock << " =" << buf << endl; // buf is the string send
-
+					//cout << "The output from sock #" << sock << " =" << buf << endl; // buf is the string send
 
 					////////////////////////////////////// Find the e and the mod
 
@@ -172,7 +171,6 @@ void main()
 									int enc = (powe % mod);
 									encrypted_str += to_binary(enc);
 								}
-								cout << "try ascii stuff = " << encrypted_str << endl;
 
 								//send(out_sock, encrypted_str.c_str(), encrypted_str.size(), 0);
 								send(sock, encrypted_str.c_str(), encrypted_str.size(), 0);
