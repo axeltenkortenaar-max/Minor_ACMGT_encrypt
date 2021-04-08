@@ -1,3 +1,12 @@
+/// <README>
+/// The client part of encryption minor
+/// 
+/// You can use the cmd to access to run the program
+/// 
+/// type in the following for the cmd
+/// (path)\Minor_client_proto.exe, (path)sending_txt.txt, (path)recevieng_txt.txt, IPadress (of the server), port number (same as server)
+/// </>
+
 #define _CRT_SECURE_NO_DEPRECATE
 #include <iostream>
 #include <WS2tcpip.h>
@@ -7,17 +16,12 @@
 #include <boost/lexical_cast.hpp>
 #include <algorithm>
 #include <fstream>
+#include <tuple>
 
 #pragma comment(lib, "ws2_32.lib")
 
 using namespace std;
 using namespace boost::multiprecision;
-
-
-/// <summary>
-/// Overal it works, kinda still some weird problems but eh
-/// </>
-
 
 int find_coprime(int coprime_1, int product_1)
 {
@@ -77,7 +81,6 @@ int rsa_encryption(int prime_1, int prime_2)
 	return e;
 }
 
-// to do power shit
 uint1024_t power_of(int user_1, int user_2)
 {
 	uint1024_t power_b = 1;
@@ -90,12 +93,10 @@ uint1024_t power_of(int user_1, int user_2)
 	return power_b;
 }
 
-string rsa_decryption(int prime_1, int prime_2, int encrypt, int product, char *encryption, int bytes_recv)
+void rsa_decryption(int prime_1, int prime_2, int encrypt, int product, char *encryption, int bytes_recv, string &encription1, string &decrypt_str)
 {
 	int k = 0;
 	int d_array[200];
-	string decrypt_str;
-	string test;
 
 	const int coprime_1 = (prime_1 - 1) * (prime_2 - 1);
 
@@ -131,28 +132,24 @@ string rsa_decryption(int prime_1, int prime_2, int encrypt, int product, char *
 			l++;
 		}
 
-		test += toascii(num);
+		encription1 += toascii(num);
 		const int enc = num;
 		const uint1024_t power_d = power_of(enc, d);
 		const uint1024_t decryption = power_d % product;
 		const string test_str = boost::lexical_cast<string>(decryption);
 		decrypt_str += toascii(stoi(test_str));
 	}
-
-	cout << "[LOG] bytes in =" << bytes_recv / 8 << endl;
-	//cout << "The Stuff that is sended over ="<< test << endl;
-	return decrypt_str;
 }
 
-void write_txt(string decrypt)
+void write_txt(string encrypt, string decrypt, char* argv[])
 {
 	ofstream myfile;
-	myfile.open("F:\\School\\Minor_ACMGT\\Recieving\\recv_text_1.txt");
-	myfile << decrypt << endl;
+	myfile.open(argv[2]);
+	myfile << "The encrypted code = " + encrypt + "\n" + "The decryption =" + decrypt << endl;
 	myfile.close();
 }
 
-void main()
+void main(int argc, char* argv[])
 {
 
 	///////////// RSA encryption ////////////
@@ -167,13 +164,12 @@ void main()
 	const int encrypt = {rsa_encryption(prime_1, prime_2)};
 
 	// this needs to be send towards the client or server
-	cout << "The public key = [" << encrypt << ", " << product << "] \n";
+	cout << "[LOG] The public key = [" << encrypt << ", " << product << "] \n";
 
 	///////////// RSA encryption ////////////
 
-	string ip_address = "127.0.0.1";	// Ip adress of the server
-	//string ip_address = "185.39.46.19";	// Ip adress of the server (enschede stad van nu (wifi))
-	const int port = 54000;					// listening port # on the server
+	string ip_address = argv[3];	// IP Adress
+	const int port = stoi(argv[4]);	// listening port # on the server
 
 	// Initialize winsock
 	WSADATA data;
@@ -181,7 +177,7 @@ void main()
 	const int ws_result = WSAStartup(ver, &data);
 	if (ws_result != 0)
 	{
-		cerr << "Can't start Winsock, Err #" << ws_result << endl;
+		cerr << "[LOG] Can't start Winsock, Err #" << ws_result << endl;
 		return;
 	}
 
@@ -189,7 +185,7 @@ void main()
 	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (sock == INVALID_SOCKET)
 	{
-		cerr << "Can't create socket, error #" << WSAGetLastError()<< endl;
+		cerr << "[LOG] Can't create socket, error #" << WSAGetLastError()<< endl;
 		WSACleanup();
 		return;
 	}
@@ -204,7 +200,7 @@ void main()
 	const int conn_result = connect(sock, (sockaddr*)&hint, sizeof(hint));
 	if (conn_result == SOCKET_ERROR)
 	{
-		cerr << "Can't connect to server, error #" << WSAGetLastError() << endl;
+		cerr << "[LOG] Can't connect to server, error #" << WSAGetLastError() << endl;
 		closesocket(sock);
 		WSACleanup();
 		return;
@@ -214,7 +210,6 @@ void main()
 	char buf[4096];
 	char *buffer;
 	string user_input;
-	string test_stuff = "abcdefghijklmnopqrstuvwxyz";
 	int i = 0;
 	int k = 0;
 	string public_key = "PK" + to_string(encrypt) + "," + to_string(product) + ",";
@@ -230,68 +225,56 @@ void main()
 			const int send_result = send(sock, user_input.c_str(), user_input.size() + 1, 0);
 			if (send_result != 0)
 			{
-				cerr << "The public key did send! \n";
+				cerr << "[LOG] The public key did send! \n";
 			}
 		}
-		else
-		{ 
-		cout << "> ";
-		//getline(cin, user_input);
-		user_input = test_stuff;
-		}
-		if (user_input.size() > 0)			//make sure the user has typed in something
+		
+		// sending .txt file
+		file = fopen(argv[1], "r");
+
+		if (!file)
 		{
+			cerr << "[LOG] The File doesn't exist \n" << WSAGetLastError() << endl;
+			closesocket(sock);
+			WSACleanup();
+			return;
+		}
 
-			///////// Try to send a .txt file
-			file = fopen("F:\\School\\Minor_ACMGT\\Sending\\send_test_1.txt", "r");
+		cout << "[LOG] The file opened correctly! \n";
 
-			if (!file)
+		fseek(file, 0, SEEK_END);
+		const int size = ftell(file);
+		fseek(file, 0, SEEK_SET);
+
+		buffer = (char*)malloc(size + 1);
+		fread(buffer, size, 1, file);
+		fclose(file);
+
+		const int send_result = send(sock, buffer, size, 0);
+		free(buffer);
+
+		// send the text
+
+		if (send_result != SOCKET_ERROR)
+		{
+			cout << "[LOG] Sending is completed! \n";
+
+			//wait for response
+			ZeroMemory(buf, 4096);
+			const int bytes_received = recv(sock, buf, 4096, 0);
+			if (bytes_received > 0)
 			{
-				cerr << "The File doesn't exist \n" << WSAGetLastError() << endl;
-				closesocket(sock);
-				WSACleanup();
-				return;
-			}
-
-			cout << "The file opened correctly! \n";
-
-			fseek(file, 0, SEEK_END);
-			const int size = ftell(file);
-			fseek(file, 0, SEEK_SET);
-			cout << "Success???? \n";
-
-			buffer = (char*)malloc(size + 1);
-			fread(buffer, size, 1, file);
-			fclose(file);
-
-			const int send_result = send(sock, buffer, size, 0);
-			free(buffer);
-
-			// send the text
-			//const int send_result = send(sock, user_input.c_str(), user_input.size() + 1, 0);
-			if (send_result != SOCKET_ERROR)
-			{
-				cout << "Sending is completed! \n";
-
-				//wait for response
-				ZeroMemory(buf, 4096);
-				const int bytes_received = recv(sock, buf, 4096, 0);
-				if (bytes_received > 0)
+				// echo response to console
+				if (*buf != 0)
 				{
-					// echo response to console
-					if (*buf != 0)
-					{
-						const string decryption = rsa_decryption(prime_1, prime_2, encrypt, product, buf, bytes_received);
-						cout << "The decrypted code = " << decryption << endl;	
-						write_txt(decryption);
-						break;
-					}
+					string encryption1, decryption1;
+					rsa_decryption(prime_1, prime_2, encrypt, product, buf, bytes_received, encryption1, decryption1);
+					write_txt(encryption1, decryption1, argv);
+					break;
 				}
 			}
-			
 		}
 		k++;
-		
 	}while(user_input.size() >= 0);
 
 	
